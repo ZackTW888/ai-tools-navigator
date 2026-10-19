@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 工具檢索庫與職能落地指南｜AI效能實驗室－秉軒老師</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  
+  <!-- Web Fonts: Nunito (英文/數字) + Noto Sans TC (中文) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            // CIS 品牌識別規範 6 個專屬色票
+            'brand-purple': '#603E8D',  // 效能紫 (主色 30%)
+            'brand-yellow': '#FFC94A',  // 火花黃 (強調色 <10%)
+            'brand-cyan': '#36C2B4',    // 清新青 (輔助色 <10%)
+            'brand-mist': '#EFEAF7',    // 晨霧紫 (大面積底色/卡片 60%)
+            'brand-ink': '#2E2640',     // 墨紫 (內文首選，不使用純黑)
+            'brand-white': '#FFFFFF',   // 雲白 (留白/反白)
+            'brand-muted': '#7A708B',   // 次級內文/標註
+            'brand-border': '#E4DCEF',  // 品牌邊框
+          },
+          fontFamily: {
+            sans: ['Nunito', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'sans-serif'],
+            mono: ['Nunito', 'ui-monospace', 'monospace'],
+          },
+          borderRadius: {
+            'cis': '18px',
+            'cis-lg': '24px',
+            'cis-sm': '12px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* CIS 排版規範 */
+    body {
+      font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+      color: #2E2640;
+      background-color: #FAFAFD;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      letter-spacing: 0.03em;
+    }
+
+    /* 37度品牌上升角輔助線條 */
+    .bg-brand-pattern {
+      background-color: #FAFAFD;
+      background-image: 
+        radial-gradient(#EFEAF7 2px, transparent 2px),
+        linear-gradient(37deg, rgba(96, 62, 141, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px, 120px 120px;
+    }
+
+    /* 捲動條風格 */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #EFEAF7;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #C4B5DC;
+      border-radius: 9999px;
+    }
+
+    /* 列印專屬模式 */
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; color: #2E2640 !important; }
+      .print-card { border: 1px solid #E4DCEF !important; box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body class="selection:bg-brand-purple selection:text-white bg-brand-pattern min-h-screen flex flex-col text-brand-ink">
+  <div id="app" class="flex-1 flex flex-col">
+
+    <!-- Toast Notification -->
+    <transition enter-active-class="transition duration-300 ease-out" enter-from-class="transform translate-y-4 opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform translate-y-4 opacity-0">
+      <div v-if="toastMessage" class="fixed bottom-6 right-6 z-50 bg-brand-ink text-white px-5 py-3 rounded-cis-sm shadow-2xl flex items-center space-x-3 border border-brand-purple/40">
+        <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+        <span class="text-sm font-semibold tracking-wide">{{ toastMessage }}</span>
+      </div>
+    </transition>
+
+    <!-- Top Navigation Bar (嚴格遵照 CIS 橫式標誌組合規格) -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-brand-border/70 shadow-xs no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+          
+          <!-- Brand Logo: 嚴格依據 CIS 規範手冊 SVG 繪製 -->
+          <div class="flex items-center space-x-3.5 cursor-pointer" @click="activeTab = 'directory'">
+            <!-- SVG Logo: 200x200 規範向量還原 -->
+            <svg class="w-12 h-12 flex-shrink-0" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- 57度開口外圓 (中心 100, 104; 半徑 74; 線寬 9; 圓頭圓角) -->
+              <!-- 開口中心在右上 46度方向，開口跨度 57度 -->
+              <path d="M 148 48 A 74 74 0 1 0 171 85" stroke="#603E8D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              
+              <!-- 實驗燒瓶 (置中縮放 62%，效能紫線條，瓶底圓角) -->
+              <path d="M 88 74 L 112 74 M 92 74 L 92 92 L 67 142 A 8 8 0 0 0 74 153 L 126 153 A 8 8 0 0 0 133 142 L 108 92 L 108 74" stroke="#603E8D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              
+              <!-- 上升勾 (清新青 #36C2B4 實心形，上升角 37度，粗頭收尖，勾尾衝出瓶壁指向開口) -->
+              <path d="M 64 128 C 76 136, 88 138, 96 128 C 114 105, 138 82, 168 62 C 145 78, 120 102, 102 120 C 94 128, 84 130, 64 128 Z" fill="#36C2B4"/>
+              
+              <!-- 火花星 (火花黃 #FFC94A，四角內凹星，半徑 19，開口外側唯一尖角) -->
+              <path d="M 172 26 Q 172 45 153 45 Q 172 45 172 64 Q 172 45 191 45 Q 172 45 172 26 Z" fill="#FFC94A"/>
+            </svg>
+
+            <!-- 橫式文字組合：標題字級為副標 1.8 倍 -->
+            <div class="flex flex-col">
+              <div class="flex items-center space-x-2">
+                <span class="font-extrabold text-brand-purple text-xl leading-none tracking-tight">AI效能實驗室</span>
+                <span class="font-bold text-brand-ink text-sm leading-none tracking-normal">秉軒老師</span>
+              </div>
+              <div class="flex items-center space-x-1.5 mt-1">
+                <span class="text-[11px] font-semibold text-brand-muted tracking-wider">是你，讓 AI 更強大</span>
+                <span class="text-[10px] text-brand-purple/40">｜</span>
+                <span class="text-[10px] text-brand-muted font-medium">You Make AI Stronger.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main View Tabs (CIS 圓角與俐落風格) -->
+          <nav class="flex items-center space-x-1.5 bg-brand-mist/80 p-1.5 rounded-cis-sm border border-brand-border">
+            <button 
+              @click="activeTab = 'directory'"
+              :class="activeTab === 'directory' ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold'"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-2"
+            >
+              <span>工具庫檢索</span>
+              <span class="text-xs px-2 py-0.2 rounded-full font-bold" :class="activeTab === 'directory' ? 'bg-brand-mist text-brand-purple' : 'bg-white/80 text-brand-muted'">{{ toolsList.length }}</span>
+            </button>
+            <button 
+              @click="activeTab = 'role-generator'"
+              :class="activeTab === 'role-generator' ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold'"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-2"
+            >
+              <span>職能行動建議報告</span>
+              <!-- 火花星點綴圖標 -->
+              <svg class="w-3.5 h-3.5 text-brand-yellow fill-current" viewBox="0 0 24 24">
+                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 12 12 0Z"/>
+              </svg>
+            </button>
+            <button 
+              @click="activeTab = 'workflows'"
+              :class="activeTab === 'workflows' ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold'"
+              class="hidden md:flex px-4 py-2 rounded-xl text-xs sm:text-sm transition-all items-center space-x-1.5"
+            >
+              <span>四大實戰工作流</span>
+            </button>
+          </nav>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+      <!-- ========================================== -->
+      <!-- VIEW 1: AI 工具庫檢索 (Tools Directory)      -->
+      <!-- ========================================== -->
+      <section v-if="activeTab === 'directory'" class="space-y-7">
+        
+        <!-- Hero Banner (嚴格依循手冊第 14、15 頁：輕鬆明亮、晨霧紫底、效能紫標題、火花黃主按鈕) -->
+        <div class="bg-brand-mist rounded-cis-lg p-8 sm:p-11 border border-brand-border relative overflow-hidden shadow-xs">
+          <!-- 37度幾何上升線條背景點綴 (手冊第 10 頁：三條為一組) -->
+          <div class="absolute right-0 top-0 w-80 h-full pointer-events-none opacity-40 hidden md:block">
+            <svg class="w-full h-full" viewBox="0 0 300 200" fill="none">
+              <line x1="80" y1="200" x2="240" y2="0" stroke="#603E8D" stroke-width="6" stroke-linecap="round"/>
+              <line x1="120" y1="200" x2="280" y2="0" stroke="#36C2B4" stroke-width="6" stroke-linecap="round"/>
+              <line x1="160" y1="200" x2="320" y2="0" stroke="#FFC94A" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <div class="relative z-10 max-w-2xl space-y-4">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white text-brand-purple border border-brand-border text-xs font-bold shadow-2xs">
+              <svg class="w-3 h-3 text-brand-yellow fill-current" viewBox="0 0 24 24">
+                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 0Z"/>
+              </svg>
+              <span>給中小企業主、主管與學員的實戰 AI 工具庫</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-black text-brand-ink leading-tight tracking-tight">
+              是你，<br>
+              <span class="text-brand-purple">讓 AI 更強大</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-brand-ink/80 leading-relaxed font-medium">
+              不被資訊淹沒，快樂、有信心地開啟企業的第一個 AI 行動。<br class="hidden sm:inline">
+              從 711 份實戰授課簡報中精選 48 款核心工具，點擊即可直達官方網站開始使用！
+            </p>
+
+            <!-- Search Bar: 乾淨俐落、高易用性 -->
+            <div class="pt-2 max-w-xl">
+              <div class="relative">
+                <input 
+                  v-model="searchQuery" 
+                  type="text" 
+                  placeholder="搜尋工具名稱、功能關鍵字（如：去背、資訊圖表、向量圖、逐字稿、數字人）..."
+                  class="w-full bg-white text-brand-ink pl-12 pr-10 py-3.5 rounded-cis border border-brand-border focus:border-brand-purple focus:outline-none focus:ring-4 focus:ring-brand-purple/15 text-sm sm:text-base shadow-xs transition-all placeholder:text-brand-muted/70"
+                >
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-purple font-bold">
+                  <svg class="w-5 h-5 text-brand-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <button 
+                  v-if="searchQuery" 
+                  @click="searchQuery = ''"
+                  class="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-ink p-1 font-bold text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Controls (嚴格落實 CIS 圓角與色彩規範) -->
+        <div class="bg-white p-6 rounded-cis-lg border border-brand-border shadow-xs space-y-4">
+          <!-- Category Pills -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-xs font-bold text-brand-muted tracking-wider uppercase">工具功能分類</div>
+              <div class="text-xs text-brand-muted font-medium">
+                顯示 <span class="font-bold text-brand-purple">{{ filteredTools.length }}</span> / {{ toolsList.length }} 款工具
+              </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-2">
+              <button 
+                v-for="cat in categories" 
+                :key="cat.id"
+                @click="selectedCategory = cat.id"
+                :class="selectedCategory === cat.id ? 'bg-brand-purple text-white font-bold shadow-xs' : 'bg-brand-mist/70 text-brand-ink/80 hover:bg-brand-mist font-semibold border border-brand-border/60'"
+                class="px-4 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5"
+              >
+                <span>{{ cat.name }}</span>
+                <span class="text-xs px-1.5 py-0.2 rounded-full font-bold" :class="selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-white text-brand-purple'">{{ getCategoryCount(cat.id) }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Secondary Pricing Filter -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pt-3.5 border-t border-brand-border/60">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-brand-muted">收費模式：</span>
+              <button 
+                v-for="price in ['all', '完全免費', '免費可用 (Freemium)', '付費訂閱 (Paid)']" 
+                :key="price"
+                @click="selectedPricing = price"
+                :class="selectedPricing === price ? 'bg-brand-ink text-white font-bold' : 'bg-brand-mist/60 text-brand-ink/70 hover:bg-brand-mist font-medium border border-brand-border/50'"
+                class="px-3 py-1 rounded-lg text-xs transition-colors"
+              >
+                {{ price === 'all' ? '全部模式' : price }}
+              </button>
+            </div>
+
+            <!-- Quick Action: Switch to Role Generator -->
+            <button 
+              @click="activeTab = 'role-generator'" 
+              class="text-xs text-brand-purple font-bold hover:underline flex items-center space-x-1"
+            >
+              <span>不知道選哪個？試試「職位專屬行動建議」→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tool Cards Grid (70% 專業 ＋ 30% 文藝，圓潤端點，手冊第 10 頁規範) -->
+        <div v-if="filteredTools.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            v-for="tool in filteredTools" 
+            :key="tool.id"
+            class="bg-white rounded-cis-lg border border-brand-border hover:border-brand-purple/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group"
+          >
+            <!-- Card Upper Section -->
+            <div class="p-6 pb-2">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                    <h3 class="text-lg font-bold text-brand-ink group-hover:text-brand-purple transition-colors">
+                      {{ tool.name }}
+                    </h3>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-brand-mist text-brand-purple border border-brand-border/60">
+                      {{ tool.category }}
+                    </span>
+                  </div>
+                  <div class="text-xs text-brand-muted mt-0.5 font-medium font-mono">
+                    {{ tool.en_name }}
+                  </div>
+                </div>
+
+                <!-- 直達官網主按鈕 (手冊第 14 頁規格：火花黃底 ＋ 墨紫文字，37度上升箭頭) -->
+                <a 
+                  :href="tool.official_url" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="flex-shrink-0 inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-brand-yellow hover:bg-amber-300 text-brand-ink text-xs font-bold shadow-2xs transition-all hover:scale-105"
+                  title="直達官方網站"
+                >
+                  <span>直達官網</span>
+                  <span class="font-bold text-sm leading-none">↗</span>
+                </a>
+              </div>
+
+              <!-- Price & Subcategory -->
+              <div class="flex items-center space-x-2 mt-3">
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-brand-ink/80">
+                  {{ tool.pricing }}
+                </span>
+                <span class="text-[11px] text-brand-muted truncate font-medium">
+                  {{ tool.subcategory }}
+                </span>
+              </div>
+
+              <!-- Description -->
+              <p class="text-sm text-brand-ink/80 mt-3 leading-relaxed">
+                {{ tool.description }}
+              </p>
+
+              <!-- Teaching Scenarios Highlights -->
+              <div class="mt-4 bg-brand-mist/60 rounded-cis-sm p-3.5 border border-brand-border/60 space-y-1.5">
+                <div class="text-xs font-bold text-brand-purple flex items-center space-x-1">
+                  <!-- 上升勾清新青圖標 -->
+                  <svg class="w-3.5 h-3.5 text-brand-cyan fill-current" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>授課實戰情境：</span>
+                </div>
+                <ul class="text-xs text-brand-ink/85 space-y-1 pl-4 list-disc font-medium">
+                  <li v-for="(sc, sidx) in tool.teaching_scenarios.slice(0, 2)" :key="sidx">
+                    {{ sc }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Prompt Formula Accordion -->
+              <div v-if="tool.prompt_formula" class="mt-3.5">
+                <button 
+                  @click="togglePrompt(tool.id)"
+                  class="w-full text-left text-xs font-bold text-brand-purple hover:text-purple-900 flex items-center justify-between py-1"
+                >
+                  <span class="flex items-center space-x-1.5">
+                    <span>💡 實戰提示詞 / 操作技巧</span>
+                  </span>
+                  <span class="text-xs transition-transform" :class="expandedPrompts[tool.id] ? 'rotate-180' : ''">▼</span>
+                </button>
+                <div v-if="expandedPrompts[tool.id]" class="mt-2 bg-brand-mist rounded-xl p-3.5 text-xs text-brand-ink/90 border border-brand-border relative">
+                  <p class="pr-12 leading-relaxed">{{ tool.prompt_formula }}</p>
+                  <button 
+                    @click="copyText(tool.prompt_formula, '已複製提示詞公式！')"
+                    class="absolute top-2.5 right-2.5 text-[10px] bg-white border border-brand-border text-brand-purple px-2 py-1 rounded-md font-bold hover:bg-brand-mist shadow-xs"
+                  >
+                    複製
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer: Tags & Deck Source Modal -->
+            <div class="px-6 py-3.5 bg-brand-mist/30 border-t border-brand-border/70 flex items-center justify-between text-xs text-brand-muted">
+              <div class="flex flex-wrap gap-1">
+                <span v-for="tag in tool.tags.slice(0, 3)" :key="tag" class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white text-brand-muted border border-brand-border/60">
+                  #{{ tag }}
+                </span>
+              </div>
+              <button 
+                @click="openDeckModal(tool)" 
+                class="text-[11px] font-semibold text-brand-purple hover:text-purple-900 underline decoration-brand-purple/30"
+              >
+                出處簡報 ({{ tool.representative_decks.length }})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty Filter State -->
+        <div v-else class="text-center py-16 bg-white rounded-cis-lg border border-brand-border">
+          <div class="text-4xl mb-3">🔍</div>
+          <h3 class="text-lg font-bold text-brand-ink">找不到符合條件的 AI 工具</h3>
+          <p class="text-sm text-brand-muted mt-1">請嘗試換個關鍵字搜尋，或重設分類條件。</p>
+          <button 
+            @click="searchQuery = ''; selectedCategory = 'all'; selectedPricing = 'all'"
+            class="mt-4 px-5 py-2 bg-brand-mist hover:bg-brand-border text-brand-purple rounded-xl text-xs font-bold transition-colors"
+          >
+            重設篩選條件
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 2: 職位專屬 AI 行動建議報告 (Generator) -->
+      <!-- ========================================== -->
+      <section v-if="activeTab === 'role-generator'" class="space-y-8">
+        
+        <!-- Hero Form Card (CIS 理念識別：帶企業主走出第一步的 AI 效能顧問) -->
+        <div class="bg-brand-mist rounded-cis-lg p-8 sm:p-11 border border-brand-border shadow-xs relative overflow-hidden no-print">
+          <div class="max-w-3xl space-y-4">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white text-brand-purple border border-brand-border text-xs font-bold shadow-2xs">
+              <svg class="w-3 h-3 text-brand-yellow fill-current" viewBox="0 0 24 24">
+                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 0Z"/>
+              </svg>
+              <span>從你最花時間的一件事開始 · 產出可執行的專屬下一步</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-black text-brand-ink leading-tight tracking-tight">
+              輸入工作職位，<br>
+              <span class="text-brand-purple">領取 AI 落地行動建議報告</span>
+            </h1>
+
+            <p class="text-base text-brand-ink/80 leading-relaxed font-medium">
+              不必追隨最新幾百個工具清單！告訴我們你的角色，系統將直接為你挑出「馬上能用、看得到成效」的工具組合、行動清單、實戰指令與易錯提醒。
+            </p>
+
+            <!-- Role Input Box -->
+            <div class="pt-3">
+              <div class="flex flex-col sm:flex-row gap-3">
+                <input 
+                  v-model="inputRole" 
+                  @keyup.enter="generateReport"
+                  type="text" 
+                  placeholder="請輸入你的職位（例如：人資主管、社群行銷、行政助理、業務經理、高中老師、長照督導、求職者...）"
+                  class="flex-1 bg-white text-brand-ink px-5 py-3.5 rounded-cis border border-brand-border focus:border-brand-purple focus:outline-none focus:ring-4 focus:ring-brand-purple/15 text-sm sm:text-base shadow-xs placeholder:text-brand-muted/70"
+                >
+                <button 
+                  @click="generateReport" 
+                  class="px-7 py-3.5 bg-brand-yellow hover:bg-amber-300 text-brand-ink font-extrabold rounded-cis shadow-sm transition-all hover:scale-105 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                >
+                  <span>產生專屬行動報告 →</span>
+                </button>
+              </div>
+
+              <!-- Popular Quick Select Pills -->
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <span class="text-xs text-brand-purple font-bold mr-1">熱門職能快選：</span>
+                <button 
+                  v-for="roleKey in Object.keys(roleProfiles)" 
+                  :key="roleKey"
+                  @click="selectPredefinedRole(roleKey)"
+                  class="px-3 py-1 rounded-xl text-xs font-semibold bg-white hover:bg-white/80 text-brand-ink border border-brand-border transition-all shadow-2xs"
+                >
+                  {{ roleKey }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated Report Output Card (手冊第 17 頁講義與報告設計) -->
+        <div v-if="currentReport" class="bg-white rounded-cis-lg border border-brand-border shadow-md overflow-hidden print-card">
+          
+          <!-- Report Header -->
+          <div class="p-8 sm:p-10 bg-brand-mist border-b border-brand-border">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center space-x-2.5">
+                  <span class="px-3 py-0.5 rounded-full bg-brand-purple text-white text-xs font-bold tracking-wide">
+                    職能診斷報告
+                  </span>
+                  <span class="text-xs text-brand-muted font-medium">產出日期：{{ currentDate }}</span>
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-black text-brand-ink mt-3 tracking-tight">
+                  {{ currentReport.title }}
+                </h2>
+                <p class="text-sm sm:text-base text-brand-purple mt-1.5 font-bold">
+                  {{ currentReport.tagline }}
+                </p>
+              </div>
+
+              <!-- Export Buttons -->
+              <div class="flex items-center space-x-2.5 no-print">
+                <button 
+                  @click="copyReportMarkdown" 
+                  class="px-4 py-2 bg-white hover:bg-slate-50 text-brand-purple rounded-xl text-xs font-bold border border-brand-border shadow-2xs transition-colors flex items-center space-x-1.5"
+                >
+                  <span>📋 複製完整 Markdown</span>
+                </button>
+                <button 
+                  @click="window.print()" 
+                  class="px-4 py-2 bg-brand-purple hover:bg-purple-900 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors flex items-center space-x-1.5"
+                >
+                  <span>🖨️ 列印 / 存為 PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Core Mission Callout -->
+            <div class="mt-6 p-5 rounded-cis bg-white border border-brand-border text-sm text-brand-ink leading-relaxed shadow-2xs">
+              <span class="font-extrabold text-brand-purple mr-1.5">🎯 職能轉型核心定位：</span>
+              {{ currentReport.core_mission }}
+            </div>
+          </div>
+
+          <!-- Report Content Sections -->
+          <div class="p-8 sm:p-10 space-y-10">
+
+            <!-- SECTION 1: Recommended Toolstack -->
+            <div>
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
+                  1
+                </div>
+                <h3 class="text-xl font-bold text-brand-ink">
+                  推薦必備工具組合 (Recommended Toolstack)
+                </h3>
+              </div>
+              <p class="text-sm text-brand-muted mb-4 font-medium">
+                挑出最核心的 3~5 款工具，每款均附官方網址轉導按鈕，點擊可立即開通使用：
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div 
+                  v-for="toolId in currentReport.recommended_tools" 
+                  :key="toolId"
+                  class="p-5 rounded-cis border border-brand-border bg-brand-mist/20 hover:bg-white hover:border-brand-purple/40 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div class="flex items-start justify-between">
+                      <span class="font-bold text-brand-ink text-base">{{ getTool(toolId)?.name || toolId }}</span>
+                      <span class="text-[11px] font-bold text-brand-purple bg-brand-mist px-2 py-0.5 rounded">{{ getTool(toolId)?.pricing }}</span>
+                    </div>
+                    <p class="text-xs text-brand-ink/80 mt-2 line-clamp-2 leading-relaxed">
+                      {{ getTool(toolId)?.description }}
+                    </p>
+                  </div>
+
+                  <div class="mt-4 pt-3 border-t border-brand-border/60 flex items-center justify-between">
+                    <span class="text-[11px] text-brand-muted font-medium">{{ getTool(toolId)?.category }}</span>
+                    <a 
+                      :href="getTool(toolId)?.official_url" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center space-x-1 text-xs font-bold text-brand-purple hover:underline"
+                    >
+                      <span>直達官網 ↗</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 2: Action List -->
+            <div>
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
+                  2
+                </div>
+                <h3 class="text-xl font-bold text-brand-ink">
+                  職能任務落地行動清單 (Step-by-Step Action Plan)
+                </h3>
+              </div>
+
+              <div class="space-y-4">
+                <div 
+                  v-for="(stage, sidx) in currentReport.action_list" 
+                  :key="sidx"
+                  class="bg-brand-mist/40 rounded-cis p-6 border border-brand-border/80"
+                >
+                  <h4 class="font-bold text-brand-purple text-base flex items-center space-x-2.5">
+                    <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">
+                      {{ sidx + 1 }}
+                    </span>
+                    <span>{{ stage.stage }}</span>
+                  </h4>
+                  <ul class="mt-3.5 space-y-2.5 pl-8 list-disc text-sm text-brand-ink/90 leading-relaxed font-medium">
+                    <li v-for="(step, pidx) in stage.steps" :key="pidx">
+                      {{ step }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: Ready-to-use Prompts -->
+            <div>
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <h3 class="text-xl font-bold text-brand-ink">
+                  精選實戰指令範本 (Ready-to-use Prompts)
+                </h3>
+              </div>
+              <p class="text-sm text-brand-muted mb-4 font-medium">
+                依據簡報中傳授的高級提示詞框架（你是-我要-你會、Co-STAR、STAR、ATM 等），直接點擊「複製指令」即可貼入使用：
+              </p>
+
+              <div class="space-y-4">
+                <div 
+                  v-for="(tmpl, tidx) in currentReport.prompt_templates" 
+                  :key="tidx"
+                  class="bg-white rounded-cis p-6 border border-brand-border shadow-xs relative"
+                >
+                  <div class="flex items-center justify-between pb-3 border-b border-brand-border/60">
+                    <div>
+                      <span class="font-bold text-brand-ink text-base">{{ tmpl.title }}</span>
+                      <span class="text-xs text-brand-muted ml-2.5 hidden sm:inline font-medium">{{ tmpl.desc }}</span>
+                    </div>
+                    <button 
+                      @click="copyText(tmpl.prompt, '已複製實戰指令！')"
+                      class="px-3.5 py-1.5 bg-brand-yellow hover:bg-amber-300 text-brand-ink rounded-lg text-xs font-bold transition-all shadow-2xs"
+                    >
+                      複製指令
+                    </button>
+                  </div>
+                  <pre class="mt-4 text-xs text-brand-ink font-mono whitespace-pre-wrap leading-relaxed custom-scrollbar max-h-60 overflow-y-auto bg-brand-mist/50 p-4 rounded-xl border border-brand-border/70">{{ tmpl.prompt }}</pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 4: Common Myths & Pitfalls -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+              
+              <!-- Common Myths -->
+              <div class="bg-amber-50/60 border border-amber-200/80 rounded-cis p-6">
+                <div class="flex items-center space-x-2 text-amber-900 font-bold text-base mb-3">
+                  <span>⚠️ 常見迷思與誤區 (Common Myths)</span>
+                </div>
+                <ul class="space-y-3 text-xs sm:text-sm text-amber-950 leading-relaxed font-medium">
+                  <li v-for="(myth, midx) in currentReport.common_myths" :key="midx" class="flex items-start space-x-2.5">
+                    <span class="font-bold text-amber-700 flex-shrink-0">✕</span>
+                    <span>{{ myth }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Pitfalls & Watchouts -->
+              <div class="bg-rose-50/60 border border-rose-200/80 rounded-cis p-6">
+                <div class="flex items-center space-x-2 text-rose-900 font-bold text-base mb-3">
+                  <span>🚨 易錯提醒與防護線 (Pitfalls & Security)</span>
+                </div>
+                <ul class="space-y-3 text-xs sm:text-sm text-rose-950 leading-relaxed font-medium">
+                  <li v-for="(pitfall, pidx) in currentReport.pitfalls_and_watchouts" :key="pidx" class="flex items-start space-x-2.5">
+                    <span class="font-bold text-rose-700 flex-shrink-0">!</span>
+                    <span>{{ pitfall }}</span>
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Initial Placeholder State -->
+        <div v-else class="text-center py-20 bg-white rounded-cis-lg border border-brand-border p-8 shadow-xs">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-brand-mist text-brand-purple flex items-center justify-center text-3xl">
+            🎯
+          </div>
+          <h3 class="text-xl font-bold text-brand-ink">請在上方輸入您的工作職位</h3>
+          <p class="text-sm text-brand-muted max-w-md mx-auto mt-2 leading-relaxed font-medium">
+            系統將結合您的具體職能需求，生成包含工具組合、落地行動清單、實戰指令與防護提醒的完整報告。
+          </p>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW 3: 四大實戰 AI 工作流 (Workflows)       -->
+      <!-- ========================================== -->
+      <section v-if="activeTab === 'workflows'" class="space-y-8">
+        
+        <div class="bg-brand-mist rounded-cis-lg p-8 sm:p-11 border border-brand-border shadow-xs">
+          <div class="max-w-2xl space-y-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white text-brand-purple border border-brand-border">
+              ⚡ 組合拳人機協作
+            </span>
+            <h1 class="text-3xl sm:text-4xl font-black text-brand-ink tracking-tight">
+              簡報精選：四大高頻實戰 AI 工作流
+            </h1>
+            <p class="text-base text-brand-ink/80 leading-relaxed font-medium">
+              單一工具只能解決局部問題，將多款 AI 工具像生產線般串聯，才是老師在企業內訓與實戰工坊中最推崇的超級產能模式！
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Workflow 1 -->
+          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+            <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
+              <span>WORKFLOW 01</span>
+              <span>·</span>
+              <span>自媒體與行銷</span>
+            </div>
+            <h3 class="text-lg font-bold text-brand-ink mt-1">
+              爆款短影音高效產製工作流
+            </h3>
+            <p class="text-xs text-brand-muted mt-1 font-medium">從腳本發想到原創配樂與文字成片，一人 30 分鐘產出專業短片。</p>
+
+            <div class="mt-6 space-y-3">
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">ChatGPT / Claude</div>
+                  <div class="text-[11px] text-brand-muted">輸入「你是-我要-你會」框架，輸出 60 秒短影音分鏡腳本</div>
+                </div>
+                <a href="https://chatgpt.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Recraft.ai / Midjourney</div>
+                  <div class="text-[11px] text-brand-muted">生成分鏡所需之品牌風格插圖或商品情境背景</div>
+                </div>
+                <a href="https://recraft.ai" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Runway / 可靈 Kling / Luma</div>
+                  <div class="text-[11px] text-brand-muted">運用運動筆刷或相機推鏡，讓靜態圖片產生流暢電影級動態</div>
+                </div>
+                <a href="https://runwayml.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">4</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Suno AI</div>
+                  <div class="text-[11px] text-brand-muted">自訂曲風與歌詞，生成 100% 免版權原創背景配樂 Jingle</div>
+                </div>
+                <a href="https://suno.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">5</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">CapCut / 剪映</div>
+                  <div class="text-[11px] text-brand-muted">文字一鍵成片、自動卡點字幕、合成所有素材一鍵導出</div>
+                </div>
+                <a href="https://www.capcut.cn" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow 2 -->
+          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+            <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
+              <span>WORKFLOW 02</span>
+              <span>·</span>
+              <span>教育與培訓</span>
+            </div>
+            <h3 class="text-lg font-bold text-brand-ink mt-1">
+              教案教材轉極速視覺簡報工作流
+            </h3>
+            <p class="text-xs text-brand-muted mt-1 font-medium">告別滿滿全是字的無聊投影片，讓課堂充滿視覺震撼與互動。</p>
+
+            <div class="mt-6 space-y-3">
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Whisper / 語音轉錄</div>
+                  <div class="text-[11px] text-brand-muted">課堂或演講錄音檔一秒轉為純文字逐字稿</div>
+                </div>
+                <a href="https://openai.com/research/whisper" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">查看 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Google NotebookLM</div>
+                  <div class="text-[11px] text-brand-muted">上傳學期教材，一鍵生成核心 FAQ、大綱與雙人對談播客</div>
+                </div>
+                <a href="https://notebooklm.google.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Gamma App</div>
+                  <div class="text-[11px] text-brand-muted">貼入提煉大綱，30 秒自動排版生成精美卡片式投影片</div>
+                </div>
+                <a href="https://gamma.app" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">4</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Napkin AI</div>
+                  <div class="text-[11px] text-brand-muted">針對複雜因果理論，貼入文字一秒轉為清晰資訊圖解並貼回簡報</div>
+                </div>
+                <a href="https://napkin.ai" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow 3 -->
+          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+            <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
+              <span>WORKFLOW 03</span>
+              <span>·</span>
+              <span>企業商務出海</span>
+            </div>
+            <h3 class="text-lg font-bold text-brand-ink mt-1">
+              打造企業 24hr「AI 虛擬行銷副總」
+            </h3>
+            <p class="text-xs text-brand-muted mt-1 font-medium">不出差、不請多語系主播，一人完成多國語言影音產品發布。</p>
+
+            <div class="mt-6 space-y-3">
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Claude / ChatGPT</div>
+                  <div class="text-[11px] text-brand-muted">撰寫打中海外客戶痛點的 B2B 產品推介腳本</div>
+                </div>
+                <a href="https://claude.ai" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">MyEdit / PhotoRoom</div>
+                  <div class="text-[11px] text-brand-muted">打造專業商務形象照或擬真 3D 分身頭像</div>
+                </div>
+                <a href="https://myedit.online" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">HeyGen 數字人分身</div>
+                  <div class="text-[11px] text-brand-muted">輸入腳本，生成英語、日語、西班牙語唇形完美同步的解說影音</div>
+                </div>
+                <a href="https://heygen.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow 4 -->
+          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+            <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
+              <span>WORKFLOW 04</span>
+              <span>·</span>
+              <span>個人品牌自動化</span>
+            </div>
+            <h3 class="text-lg font-bold text-brand-ink mt-1">
+              全自動化客服與導流轉化漏斗
+            </h3>
+            <p class="text-xs text-brand-muted mt-1 font-medium">學員填寫表單後，AI 即時客製化解答並發信，下班也能持續獲客。</p>
+
+            <div class="mt-6 space-y-3">
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Google 表單 / Typeform</div>
+                  <div class="text-[11px] text-brand-muted">收集潛在受眾的痛點提問與 Email</div>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Make.com 自動化中樞</div>
+                  <div class="text-[11px] text-brand-muted">監聽新回覆，自動觸發 OpenAI API 進行個人化深度分析</div>
+                </div>
+                <a href="https://make.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+              </div>
+
+              <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
+                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1">
+                  <div class="text-xs font-bold text-brand-ink">Gmail / LINE Notify</div>
+                  <div class="text-[11px] text-brand-muted">3 秒內自動將量身打造之建議書與課程連結送達學員手中</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Representative Decks Modal -->
+    <div v-if="activeModalTool" class="fixed inset-0 z-50 bg-brand-ink/50 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-cis-lg max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4 max-h-[85vh] flex flex-col border border-brand-border">
+        <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+          <div>
+            <h3 class="text-lg font-bold text-brand-ink">{{ activeModalTool.name }}</h3>
+            <p class="text-xs text-brand-muted font-medium">簡報教學出處清單</p>
+          </div>
+          <button @click="activeModalTool = null" class="w-8 h-8 rounded-full bg-brand-mist hover:bg-brand-border flex items-center justify-center text-brand-ink font-bold text-sm">
+            ✕
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+          <div 
+            v-for="(deck, didx) in activeModalTool.representative_decks" 
+            :key="didx"
+            class="p-3 rounded-xl bg-brand-mist/40 text-xs text-brand-ink border border-brand-border/60 font-mono break-all font-medium"
+          >
+            📄 {{ deck }}
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button 
+            @click="activeModalTool = null" 
+            class="px-5 py-2 bg-brand-purple hover:bg-purple-900 text-white rounded-xl text-xs font-bold"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer: 嚴格依據手冊標註 -->
+    <footer class="bg-white border-t border-brand-border py-8 text-center text-xs text-brand-muted no-print space-y-2">
+      <div class="flex items-center justify-center space-x-2">
+        <span class="font-bold text-brand-purple">AI效能實驗室－秉軒老師</span>
+        <span>｜</span>
+        <span class="font-semibold text-brand-ink">是你，讓 AI 更強大</span>
+        <span>｜</span>
+        <span>You Make AI Stronger.</span>
+      </div>
+      <p>© 2026 AI 效能實驗室 · 品牌識別系統規範 v1.0 · 專供學員實戰檢索與職能落地使用</p>
+    </footer>
+
+  </div>
+
+  <!-- Load Data -->
+  <script src="./data.js"></script>
+
+  <!-- App Script -->
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const activeTab = ref('directory');
+        const searchQuery = ref('');
+        const selectedCategory = ref('all');
+        const selectedPricing = ref('all');
+        const expandedPrompts = ref({});
+        const activeModalTool = ref(null);
+        const toastMessage = ref('');
+        const inputRole = ref('');
+        const currentReport = ref(null);
+
+        const toolsList = ref(AI_TOOLS_DATA || []);
+        const categories = ref(CATEGORIES || []);
+        const roleProfiles = ref(ROLE_PROFILES || {});
+
+        const currentDate = computed(() => {
+          const now = new Date();
+          return now.getFullYear() + ' 年 ' + (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日';
+        });
+
+        // Filter tools logic
+        const filteredTools = computed(() => {
+          return toolsList.value.filter(tool => {
+            // Category filter
+            if (selectedCategory.value !== 'all' && tool.category !== selectedCategory.value) {
+              return false;
+            }
+            // Pricing filter
+            if (selectedPricing.value !== 'all' && tool.pricing !== selectedPricing.value) {
+              return false;
+            }
+            // Search query filter
+            if (searchQuery.value.trim() !== '') {
+              const q = searchQuery.value.toLowerCase().trim();
+              const matchName = tool.name.toLowerCase().includes(q) || tool.en_name.toLowerCase().includes(q);
+              const matchDesc = tool.description.toLowerCase().includes(q);
+              const matchScenarios = tool.teaching_scenarios.some(s => s.toLowerCase().includes(q));
+              const matchPrompt = (tool.prompt_formula || '').toLowerCase().includes(q);
+              const matchTags = (tool.tags || []).some(t => t.toLowerCase().includes(q));
+              return matchName || matchDesc || matchScenarios || matchPrompt || matchTags;
+            }
+            return true;
+          });
+        });
+
+        const getCategoryCount = (catId) => {
+          if (catId === 'all') return toolsList.value.length;
+          return toolsList.value.filter(t => t.category === catId).length;
+        };
+
+        const getTool = (toolId) => {
+          return toolsList.value.find(t => t.id === toolId);
+        };
+
+        const togglePrompt = (toolId) => {
+          expandedPrompts.value[toolId] = !expandedPrompts.value[toolId];
+        };
+
+        const openDeckModal = (tool) => {
+          activeModalTool.value = tool;
+        };
+
+        const showToast = (msg) => {
+          toastMessage.value = msg;
+          setTimeout(() => {
+            toastMessage.value = '';
+          }, 2500);
+        };
+
+        const copyText = (text, successMsg) => {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+              showToast(successMsg || '已複製至剪貼簿！');
+            });
+          } else {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast(successMsg || '已複製至剪貼簿！');
+          }
+        };
+
+        const selectPredefinedRole = (roleKey) => {
+          inputRole.value = roleKey;
+          generateReport();
+        };
+
+        const generateReport = () => {
+          const raw = inputRole.value.trim();
+          if (!raw) {
+            showToast('請先輸入或選擇您的工作職位！');
+            return;
+          }
+
+          const lower = raw.toLowerCase();
+          let matchedKey = null;
+
+          for (const key of Object.keys(roleProfiles.value)) {
+            const profile = roleProfiles.value[key];
+            if (profile.keywords.some(k => lower.includes(k)) || lower.includes(key.toLowerCase())) {
+              matchedKey = key;
+              break;
+            }
+          }
+
+          if (matchedKey) {
+            currentReport.value = roleProfiles.value[matchedKey];
+            showToast('已為您生成「' + matchedKey + '」專屬 AI 行動建議報告！');
+          } else {
+            currentReport.value = generateDynamicCustomReport(raw);
+            showToast('已為自訂職位「' + raw + '」生成專屬 AI 應用報告！');
+          }
+
+          setTimeout(() => {
+            const el = document.querySelector('.print-card');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+        };
+
+        const generateDynamicCustomReport = (roleName) => {
+          let tools = ["chatgpt", "gamma", "notebooklm", "napkin"];
+          const lower = roleName.toLowerCase();
+          
+          if (lower.includes('設計') || lower.includes('美術') || lower.includes('美編')) {
+            tools = ["recraft", "ideogram", "midjourney", "firefly", "vectorizer"];
+          } else if (lower.includes('工程') || lower.includes('程式') || lower.includes('軟體') || lower.includes('開發')) {
+            tools = ["cursor", "v0", "chatgpt", "claude"];
+          } else if (lower.includes('會計') || lower.includes('財務') || lower.includes('出納')) {
+            tools = ["chatexcel", "chatgpt", "notebooklm", "vocol"];
+          } else if (lower.includes('客服') || lower.includes('服務') || lower.includes('門市')) {
+            tools = ["chatgpt", "make", "notionai", "canva"];
+          } else if (lower.includes('法務') || lower.includes('律師') || lower.includes('合約')) {
+            tools = ["claude", "kimi", "notebooklm", "perplexity"];
+          }
+
+          return {
+            title: `${roleName} AI 專屬行動建議報告`,
+            tagline: `從你最花時間的一件事開始，建立 ${roleName} 的高成效人機協作流程`,
+            recommended_tools: tools,
+            core_mission: `運用大語言模型重構「${roleName}」的日常公文、調研與專案企劃，透過視覺化工具（Gamma / Napkin AI）極速產出高品質成果，並建立專屬知識庫釋放重複溝通成本。`,
+            action_list: [
+              {
+                stage: "第一階段：個人核心任務效率翻倍 (立即啟動)",
+                steps: [
+                  `列出每週最花時間的 3 件事，挑一件重複性高、規則清楚的，交由 ChatGPT 建立專屬提問指令。`,
+                  `遇到專業領域疑問或產業競品調研時，善用 Perplexity 獲取具備可靠引用來源的分析洞察。`
+                ]
+              },
+              {
+                stage: "第二階段：專業成果視覺化與知識庫建立 (進階深化)",
+                "steps": [
+                  `將本職位常需傳閱之 SOP、專案規劃或專業論述，使用 Napkin AI 轉化為直觀易懂的流程圖與架構圖。`,
+                  `將所屬領域之法令規章、工作規範或產品手冊上傳至 Google NotebookLM，建立專屬無幻覺知識問答庫。`
+                ]
+              },
+              {
+                stage: "第三階段：工作流標準化與人機協作常態化 (建立壁壘)",
+                steps: [
+                  `將高頻跨工具任務（如表單收集、自動分析、郵件發送）嘗試透過 Make.com 串接為半自動化工作流。`,
+                  `持續精進提問思維，將自身「行業實務經驗」注入提示詞，使產出品質顯著拉開與純外行提問的差距。`
+                ]
+              }
+            ],
+            prompt_templates: [
+              {
+                title: `${roleName} 專業任務深度拆解指令`,
+                desc: "針對本職位核心挑戰，產出具備實操價值的解方架構",
+                prompt: `你是擁有 15 年以上資歷的資深【${roleName}】顧問與行業專家。\n我目前面臨的核心工作任務是：【[具體描述您的任務目標，如：優化作業流程/提出改善企劃]】。\n請運用專業行業視角，為我提供：\n1. 【核心痛點與挑戰剖析】：點出該任務中最容易被忽視的 3 個潛在瓶頸。\n2. 【分階段執行策略】：提供清晰的三步驟實施指南，包含先後順序與關鍵交付成果。\n3. 【成效驗證指標】：建議 2~3 個可量化的 KPI 衡量標準。`
+              }
+            ],
+            common_myths: [
+              `迷思 1：『只要會用 AI 工具，就不需要累積 ${roleName} 的專業基本功。』→ 錯！AI 放大的是你原有的專業判斷力。沒有深厚的實務經驗，你將無法辨別 AI 產出的真偽與品質優劣。`,
+              `迷思 2：『一次性輸入大段模糊需求，就期望 AI 給出完美解答。』→ 錯！善用「你是-我要-你會」與逐步追問對話，引導 AI 逐步修正才會有好結果。`
+            ],
+            pitfalls_and_watchouts: [
+              `🚨 機密與個資防線：切勿將公司未公開的營運數據、客戶姓名或機密代碼直接貼至公開雲端對話系統。`,
+              `🚨 幻覺查核機制：AI 生成之數據引用、法條依據或專業名詞，重要場合必須親自核對原始文件。`
+            ]
+          };
+        };
+
+        const copyReportMarkdown = () => {
+          if (!currentReport.value) return;
+          const r = currentReport.value;
+          let md = `# ${r.title}\n> ${r.tagline}\n\n`;
+          md += `**產出日期**：${currentDate.value}\n\n`;
+          md += `## 🎯 職能轉型核心定位\n${r.core_mission}\n\n`;
+          
+          md += `## 一、推薦必備工具組合 (Toolstack)\n`;
+          r.recommended_tools.forEach(tid => {
+            const t = getTool(tid);
+            if (t) {
+              md += `- **[${t.name}](${t.official_url})** (${t.pricing})：${t.description}\n`;
+            }
+          });
+          md += `\n`;
+
+          md += `## 二、職能任務落地行動清單 (Action Plan)\n`;
+          r.action_list.forEach((stg, i) => {
+            md += `### ${stg.stage}\n`;
+            stg.steps.forEach(s => {
+              md += `- ${s}\n`;
+            });
+            md += `\n`;
+          });
+
+          md += `## 三、精選實戰指令範本 (Prompts)\n`;
+          r.prompt_templates.forEach(p => {
+            md += `### ${p.title}\n*${p.desc}*\n\`\`\`text\n${p.prompt}\n\`\`\`\n\n`;
+          });
+
+          md += `## 四、常見迷思與易錯防護線\n### ⚠️ 常見迷思 (Common Myths)\n`;
+          r.common_myths.forEach(m => md += `- ${m}\n`);
+          md += `\n### 🚨 易錯提醒與防護線 (Pitfalls & Security)\n`;
+          r.pitfalls_and_watchouts.forEach(p => md += `- ${p}\n`);
+
+          copyText(md, '已複製整份 Markdown 行動建議報告！');
+        };
+
+        onMounted(() => {
+          // 預設載入人資專員作為展示範例
+          inputRole.value = "人資專員 / 招募主管";
+          currentReport.value = roleProfiles.value["人資專員 / 招募主管"];
+        });
+
+        return {
+          activeTab,
+          searchQuery,
+          selectedCategory,
+          selectedPricing,
+          expandedPrompts,
+          activeModalTool,
+          toastMessage,
+          inputRole,
+          currentReport,
+          toolsList,
+          categories,
+          roleProfiles,
+          currentDate,
+          filteredTools,
+          getCategoryCount,
+          getTool,
+          togglePrompt,
+          openDeckModal,
+          copyText,
+          selectPredefinedRole,
+          generateReport,
+          copyReportMarkdown
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
