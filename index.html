@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFFFF">
   <title>AI 工具檢索庫與職能落地指南｜AI效能實驗室－秉軒老師</title>
   
   <!-- Tailwind CSS CDN -->
@@ -38,6 +39,13 @@
             'cis': '18px',
             'cis-lg': '24px',
             'cis-sm': '12px',
+          },
+          boxShadow: {
+            'xs': '0 1px 2px 0 rgba(46, 38, 64, 0.06)',
+            '2xs': '0 1px 0 0 rgba(46, 38, 64, 0.05)',
+          },
+          backdropBlur: {
+            'xs': '2px',
           }
         }
       }
@@ -80,12 +88,22 @@
       border-radius: 9999px;
     }
 
+    /* 手機版：橫向滑動列不顯示捲動條 */
+    .no-scrollbar { scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* 手機底部分頁列，避開 iPhone 底部手勢區 */
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+
     /* 列印專屬模式 */
     @media print {
       .no-print { display: none !important; }
       .print-only { display: block !important; }
       body { background: white !important; color: #2E2640 !important; }
       .print-card { border: 1px solid #E4DCEF !important; box-shadow: none !important; }
+      header, .mobile-tabbar { display: none !important; }
     }
   </style>
 </head>
@@ -94,7 +112,7 @@
 
     <!-- Toast Notification -->
     <transition enter-active-class="transition duration-300 ease-out" enter-from-class="transform translate-y-4 opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform translate-y-4 opacity-0">
-      <div v-if="toastMessage" class="fixed bottom-6 right-6 z-50 bg-brand-ink text-white px-5 py-3 rounded-cis-sm shadow-2xl flex items-center space-x-3 border border-brand-purple/40">
+      <div v-if="toastMessage" class="fixed left-4 right-4 bottom-24 md:left-auto md:right-6 md:bottom-6 z-50 bg-brand-ink text-white px-5 py-3 rounded-cis-sm shadow-2xl flex items-center justify-center md:justify-start space-x-3 border border-brand-purple/40">
         <svg class="w-4 h-4 text-brand-cyan" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
         </svg>
@@ -105,12 +123,12 @@
     <!-- Top Navigation Bar (嚴格遵照 CIS 橫式標誌組合規格) -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-brand-border/70 shadow-xs no-print">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-20">
+        <div class="flex items-center justify-between gap-4 h-16 md:h-20">
           
           <!-- Brand Logo: 嚴格依據 CIS 規範手冊 SVG 繪製 -->
-          <div class="flex items-center space-x-3.5 cursor-pointer" @click="activeTab = 'directory'">
+          <div class="flex items-center space-x-2.5 sm:space-x-3.5 cursor-pointer min-w-0" @click="activeTab = 'directory'">
             <!-- SVG Logo: 200x200 規範向量還原 -->
-            <svg class="w-12 h-12 flex-shrink-0" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
               <!-- 57度開口外圓 (中心 100, 104; 半徑 74; 線寬 9; 圓頭圓角) -->
               <!-- 開口中心在右上 46度方向，開口跨度 57度 -->
               <path d="M 148 48 A 74 74 0 1 0 171 85" stroke="#603E8D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
@@ -126,12 +144,12 @@
             </svg>
 
             <!-- 橫式文字組合：標題字級為副標 1.8 倍 -->
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2">
-                <span class="font-extrabold text-brand-purple text-xl leading-none tracking-tight">AI效能實驗室</span>
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center space-x-2 whitespace-nowrap">
+                <span class="font-extrabold text-brand-purple text-lg md:text-xl leading-none tracking-tight">AI效能實驗室</span>
                 <span class="font-bold text-brand-ink text-sm leading-none tracking-normal">秉軒老師</span>
               </div>
-              <div class="flex items-center space-x-1.5 mt-1">
+              <div class="flex items-center space-x-1.5 mt-1 whitespace-nowrap md:hidden lg:flex">
                 <span class="text-[11px] font-semibold text-brand-muted tracking-wider">是你，讓 AI 更強大</span>
                 <span class="text-[10px] text-brand-purple/40">｜</span>
                 <span class="text-[10px] text-brand-muted font-medium">You Make AI Stronger.</span>
@@ -139,33 +157,23 @@
             </div>
           </div>
 
-          <!-- Main View Tabs (CIS 圓角與俐落風格) -->
-          <nav class="flex items-center space-x-1.5 bg-brand-mist/80 p-1.5 rounded-cis-sm border border-brand-border">
+          <!-- Main View Tabs (CIS 圓角與俐落風格)：平板以上顯示在頂部，手機改用底部分頁列 -->
+          <nav class="hidden md:flex items-center flex-shrink-0 space-x-1.5 bg-brand-mist/80 p-1.5 rounded-cis-sm border border-brand-border" aria-label="主要分頁">
             <button 
-              @click="activeTab = 'directory'"
-              :class="activeTab === 'directory' ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold'"
-              class="px-4 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-2"
+              v-for="tab in tabs"
+              :key="tab.id"
+              @click="activeTab = tab.id"
+              :aria-current="activeTab === tab.id ? 'page' : null"
+              :class="activeTab === tab.id ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold border border-transparent'"
+              class="px-3 lg:px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all flex items-center space-x-2"
             >
-              <span>工具庫檢索</span>
-              <span class="text-xs px-2 py-0.2 rounded-full font-bold" :class="activeTab === 'directory' ? 'bg-brand-mist text-brand-purple' : 'bg-white/80 text-brand-muted'">{{ toolsList.length }}</span>
-            </button>
-            <button 
-              @click="activeTab = 'role-generator'"
-              :class="activeTab === 'role-generator' ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold'"
-              class="px-4 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-2"
-            >
-              <span>職能行動建議報告</span>
+              <span class="lg:hidden">{{ tab.short }}</span>
+              <span class="hidden lg:inline">{{ tab.label }}</span>
+              <span v-if="tab.id === 'directory'" class="text-xs px-2 py-0.5 rounded-full font-bold" :class="activeTab === tab.id ? 'bg-brand-mist text-brand-purple' : 'bg-white/80 text-brand-muted'">{{ toolsList.length }}</span>
               <!-- 火花星點綴圖標 -->
-              <svg class="w-3.5 h-3.5 text-brand-yellow fill-current" viewBox="0 0 24 24">
+              <svg v-if="tab.id === 'role-generator'" class="w-3.5 h-3.5 text-brand-yellow fill-current" viewBox="0 0 24 24">
                 <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 12 12 0Z"/>
               </svg>
-            </button>
-            <button 
-              @click="activeTab = 'workflows'"
-              :class="activeTab === 'workflows' ? 'bg-white text-brand-purple shadow-xs font-bold border border-brand-border/60' : 'text-brand-ink/75 hover:text-brand-ink font-semibold'"
-              class="hidden md:flex px-4 py-2 rounded-xl text-xs sm:text-sm transition-all items-center space-x-1.5"
-            >
-              <span>四大實戰工作流</span>
             </button>
           </nav>
 
@@ -173,16 +181,34 @@
       </div>
     </header>
 
+    <!-- 手機底部分頁列：三個分頁都能一指切換 -->
+    <nav class="mobile-tabbar md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-brand-border safe-bottom no-print" aria-label="主要分頁">
+      <div class="grid grid-cols-3">
+        <button 
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="activeTab = tab.id"
+          :aria-current="activeTab === tab.id ? 'page' : null"
+          :class="activeTab === tab.id ? 'text-brand-purple' : 'text-brand-muted'"
+          class="relative flex flex-col items-center justify-center gap-0.5 h-16 text-[11px] font-bold"
+        >
+          <span v-if="activeTab === tab.id" class="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 rounded-b-full bg-brand-purple"></span>
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="tab.icon"></svg>
+          <span>{{ tab.short }}</span>
+        </button>
+      </div>
+    </nav>
+
     <!-- Main Content Body -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
 
       <!-- ========================================== -->
       <!-- VIEW 1: AI 工具庫檢索 (Tools Directory)      -->
       <!-- ========================================== -->
-      <section v-if="activeTab === 'directory'" class="space-y-7">
+      <section v-if="activeTab === 'directory'" class="space-y-5 sm:space-y-7">
         
         <!-- Hero Banner (嚴格依循手冊第 14、15 頁：輕鬆明亮、晨霧紫底、效能紫標題、火花黃主按鈕) -->
-        <div class="bg-brand-mist rounded-cis-lg p-8 sm:p-11 border border-brand-border relative overflow-hidden shadow-xs">
+        <div class="bg-brand-mist rounded-cis-lg p-5 sm:p-11 border border-brand-border relative overflow-hidden shadow-xs">
           <!-- 37度幾何上升線條背景點綴 (手冊第 10 頁：三條為一組) -->
           <div class="absolute right-0 top-0 w-80 h-full pointer-events-none opacity-40 hidden md:block">
             <svg class="w-full h-full" viewBox="0 0 300 200" fill="none">
@@ -193,19 +219,19 @@
           </div>
 
           <div class="relative z-10 max-w-2xl space-y-4">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white text-brand-purple border border-brand-border text-xs font-bold shadow-2xs">
+            <div class="inline-flex items-start sm:items-center space-x-2 px-3 py-1 rounded-cis-sm sm:rounded-full bg-white text-brand-purple border border-brand-border text-xs font-bold shadow-2xs">
               <svg class="w-3 h-3 text-brand-yellow fill-current" viewBox="0 0 24 24">
-                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 0Z"/>
+                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 12 12 0Z"/>
               </svg>
               <span>給中小企業主、主管與學員的實戰 AI 工具庫</span>
             </div>
 
-            <h1 class="text-3xl sm:text-5xl font-black text-brand-ink leading-tight tracking-tight">
+            <h1 class="text-[1.75rem] sm:text-5xl font-black text-brand-ink leading-tight tracking-tight">
               是你，<br>
               <span class="text-brand-purple">讓 AI 更強大</span>
             </h1>
 
-            <p class="text-base sm:text-lg text-brand-ink/80 leading-relaxed font-medium">
+            <p class="text-[15px] sm:text-lg text-brand-ink/80 leading-relaxed font-medium">
               不被資訊淹沒，快樂、有信心地開啟企業的第一個 AI 行動。<br class="hidden sm:inline">
               從 711 份實戰授課簡報中精選 48 款核心工具，點擊即可直達官方網站開始使用！
             </p>
@@ -215,9 +241,11 @@
               <div class="relative">
                 <input 
                   v-model="searchQuery" 
-                  type="text" 
-                  placeholder="搜尋工具名稱、功能關鍵字（如：去背、資訊圖表、向量圖、逐字稿、數字人）..."
-                  class="w-full bg-white text-brand-ink pl-12 pr-10 py-3.5 rounded-cis border border-brand-border focus:border-brand-purple focus:outline-none focus:ring-4 focus:ring-brand-purple/15 text-sm sm:text-base shadow-xs transition-all placeholder:text-brand-muted/70"
+                  type="search"
+                  enterkeyhint="search"
+                  aria-label="搜尋 AI 工具"
+                  placeholder="搜尋工具或功能，如：去背、逐字稿、數字人"
+                  class="w-full bg-white text-brand-ink pl-12 pr-11 py-3.5 rounded-cis border border-brand-border focus:border-brand-purple focus:outline-none focus:ring-4 focus:ring-brand-purple/15 text-base shadow-xs transition-all placeholder:text-brand-muted/70 [&::-webkit-search-cancel-button]:hidden"
                 >
                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-purple font-bold">
                   <svg class="w-5 h-5 text-brand-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -227,7 +255,8 @@
                 <button 
                   v-if="searchQuery" 
                   @click="searchQuery = ''"
-                  class="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-ink p-1 font-bold text-sm"
+                  aria-label="清除搜尋"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-brand-muted hover:text-brand-ink font-bold text-sm"
                 >
                   ✕
                 </button>
@@ -237,7 +266,7 @@
         </div>
 
         <!-- Filter Controls (嚴格落實 CIS 圓角與色彩規範) -->
-        <div class="bg-white p-6 rounded-cis-lg border border-brand-border shadow-xs space-y-4">
+        <div class="bg-white p-4 sm:p-6 rounded-cis-lg border border-brand-border shadow-xs space-y-4">
           <!-- Category Pills -->
           <div>
             <div class="flex items-center justify-between mb-3">
@@ -247,30 +276,31 @@
               </div>
             </div>
             
-            <div class="flex flex-wrap gap-2">
+            <!-- 手機：單列左右滑動；平板以上：自動換行 -->
+            <div class="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible">
               <button 
                 v-for="cat in categories" 
                 :key="cat.id"
                 @click="selectedCategory = cat.id"
                 :class="selectedCategory === cat.id ? 'bg-brand-purple text-white font-bold shadow-xs' : 'bg-brand-mist/70 text-brand-ink/80 hover:bg-brand-mist font-semibold border border-brand-border/60'"
-                class="px-4 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5"
+                class="flex-shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-sm transition-all flex items-center space-x-1.5"
               >
                 <span>{{ cat.name }}</span>
-                <span class="text-xs px-1.5 py-0.2 rounded-full font-bold" :class="selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-white text-brand-purple'">{{ getCategoryCount(cat.id) }}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded-full font-bold" :class="selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-white text-brand-purple'">{{ getCategoryCount(cat.id) }}</span>
               </button>
             </div>
           </div>
 
           <!-- Secondary Pricing Filter -->
-          <div class="flex flex-wrap items-center justify-between gap-4 pt-3.5 border-t border-brand-border/60">
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-bold text-brand-muted">收費模式：</span>
+          <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 pt-3.5 border-t border-brand-border/60">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-bold text-brand-muted w-full sm:w-auto">收費模式：</span>
               <button 
                 v-for="price in ['all', '完全免費', '免費可用 (Freemium)', '付費訂閱 (Paid)']" 
                 :key="price"
                 @click="selectedPricing = price"
                 :class="selectedPricing === price ? 'bg-brand-ink text-white font-bold' : 'bg-brand-mist/60 text-brand-ink/70 hover:bg-brand-mist font-medium border border-brand-border/50'"
-                class="px-3 py-1 rounded-lg text-xs transition-colors"
+                class="whitespace-nowrap px-3 py-1.5 sm:py-1 rounded-lg text-xs transition-colors"
               >
                 {{ price === 'all' ? '全部模式' : price }}
               </button>
@@ -279,7 +309,7 @@
             <!-- Quick Action: Switch to Role Generator -->
             <button 
               @click="activeTab = 'role-generator'" 
-              class="text-xs text-brand-purple font-bold hover:underline flex items-center space-x-1"
+              class="text-xs text-brand-purple font-bold hover:underline flex items-center space-x-1 py-1 text-left"
             >
               <span>不知道選哪個？試試「職位專屬行動建議」→</span>
             </button>
@@ -287,17 +317,17 @@
         </div>
 
         <!-- Tool Cards Grid (70% 專業 ＋ 30% 文藝，圓潤端點，手冊第 10 頁規範) -->
-        <div v-if="filteredTools.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="filteredTools.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <div 
             v-for="tool in filteredTools" 
             :key="tool.id"
             class="bg-white rounded-cis-lg border border-brand-border hover:border-brand-purple/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group"
           >
             <!-- Card Upper Section -->
-            <div class="p-6 pb-2">
+            <div class="p-5 sm:p-6 pb-2">
               <div class="flex items-start justify-between gap-3">
-                <div class="flex-1">
-                  <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center flex-wrap gap-x-2 gap-y-1">
                     <h3 class="text-lg font-bold text-brand-ink group-hover:text-brand-purple transition-colors">
                       {{ tool.name }}
                     </h3>
@@ -315,7 +345,7 @@
                   :href="tool.official_url" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  class="flex-shrink-0 inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-brand-yellow hover:bg-amber-300 text-brand-ink text-xs font-bold shadow-2xs transition-all hover:scale-105"
+                  class="flex-shrink-0 inline-flex items-center space-x-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl bg-brand-yellow hover:bg-amber-300 text-brand-ink text-xs font-bold shadow-2xs transition-all hover:scale-105"
                   title="直達官方網站"
                 >
                   <span>直達官網</span>
@@ -324,8 +354,8 @@
               </div>
 
               <!-- Price & Subcategory -->
-              <div class="flex items-center space-x-2 mt-3">
-                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-brand-ink/80">
+              <div class="flex items-center space-x-2 mt-3 min-w-0">
+                <span class="flex-shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-brand-ink/80">
                   {{ tool.pricing }}
                 </span>
                 <span class="text-[11px] text-brand-muted truncate font-medium">
@@ -358,7 +388,8 @@
               <div v-if="tool.prompt_formula" class="mt-3.5">
                 <button 
                   @click="togglePrompt(tool.id)"
-                  class="w-full text-left text-xs font-bold text-brand-purple hover:text-purple-900 flex items-center justify-between py-1"
+                  :aria-expanded="!!expandedPrompts[tool.id]"
+                  class="w-full text-left text-xs font-bold text-brand-purple hover:text-purple-900 flex items-center justify-between py-2"
                 >
                   <span class="flex items-center space-x-1.5">
                     <span>💡 實戰提示詞 / 操作技巧</span>
@@ -366,10 +397,10 @@
                   <span class="text-xs transition-transform" :class="expandedPrompts[tool.id] ? 'rotate-180' : ''">▼</span>
                 </button>
                 <div v-if="expandedPrompts[tool.id]" class="mt-2 bg-brand-mist rounded-xl p-3.5 text-xs text-brand-ink/90 border border-brand-border relative">
-                  <p class="pr-12 leading-relaxed">{{ tool.prompt_formula }}</p>
+                  <p class="pr-14 leading-relaxed">{{ tool.prompt_formula }}</p>
                   <button 
                     @click="copyText(tool.prompt_formula, '已複製提示詞公式！')"
-                    class="absolute top-2.5 right-2.5 text-[10px] bg-white border border-brand-border text-brand-purple px-2 py-1 rounded-md font-bold hover:bg-brand-mist shadow-xs"
+                    class="absolute top-2 right-2 text-xs bg-white border border-brand-border text-brand-purple px-2.5 py-1.5 rounded-md font-bold hover:bg-brand-mist shadow-xs"
                   >
                     複製
                   </button>
@@ -378,7 +409,7 @@
             </div>
 
             <!-- Card Footer: Tags & Deck Source Modal -->
-            <div class="px-6 py-3.5 bg-brand-mist/30 border-t border-brand-border/70 flex items-center justify-between text-xs text-brand-muted">
+            <div class="px-5 sm:px-6 py-3 sm:py-3.5 bg-brand-mist/30 border-t border-brand-border/70 flex items-center justify-between gap-3 text-xs text-brand-muted">
               <div class="flex flex-wrap gap-1">
                 <span v-for="tag in tool.tags.slice(0, 3)" :key="tag" class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white text-brand-muted border border-brand-border/60">
                   #{{ tag }}
@@ -386,7 +417,7 @@
               </div>
               <button 
                 @click="openDeckModal(tool)" 
-                class="text-[11px] font-semibold text-brand-purple hover:text-purple-900 underline decoration-brand-purple/30"
+                class="flex-shrink-0 whitespace-nowrap py-1 text-[11px] font-semibold text-brand-purple hover:text-purple-900 underline decoration-brand-purple/30"
               >
                 出處簡報 ({{ tool.representative_decks.length }})
               </button>
@@ -415,16 +446,16 @@
       <section v-if="activeTab === 'role-generator'" class="space-y-8">
         
         <!-- Hero Form Card (CIS 理念識別：帶企業主走出第一步的 AI 效能顧問) -->
-        <div class="bg-brand-mist rounded-cis-lg p-8 sm:p-11 border border-brand-border shadow-xs relative overflow-hidden no-print">
+        <div class="bg-brand-mist rounded-cis-lg p-5 sm:p-11 border border-brand-border shadow-xs relative overflow-hidden no-print">
           <div class="max-w-3xl space-y-4">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white text-brand-purple border border-brand-border text-xs font-bold shadow-2xs">
+            <div class="inline-flex items-start sm:items-center space-x-2 px-3 py-1 rounded-cis-sm sm:rounded-full bg-white text-brand-purple border border-brand-border text-xs font-bold shadow-2xs">
               <svg class="w-3 h-3 text-brand-yellow fill-current" viewBox="0 0 24 24">
-                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 0Z"/>
+                <path d="M12 0Q12 12 0 12Q12 12 12 24Q12 12 24 12Q12 12 12 0Z"/>
               </svg>
               <span>從你最花時間的一件事開始 · 產出可執行的專屬下一步</span>
             </div>
 
-            <h1 class="text-3xl sm:text-5xl font-black text-brand-ink leading-tight tracking-tight">
+            <h1 class="text-[1.75rem] sm:text-5xl font-black text-brand-ink leading-tight tracking-tight">
               輸入工作職位，<br>
               <span class="text-brand-purple">領取 AI 落地行動建議報告</span>
             </h1>
@@ -440,8 +471,10 @@
                   v-model="inputRole" 
                   @keyup.enter="generateReport"
                   type="text" 
-                  placeholder="請輸入你的職位（例如：人資主管、社群行銷、行政助理、業務經理、高中老師、長照督導、求職者...）"
-                  class="flex-1 bg-white text-brand-ink px-5 py-3.5 rounded-cis border border-brand-border focus:border-brand-purple focus:outline-none focus:ring-4 focus:ring-brand-purple/15 text-sm sm:text-base shadow-xs placeholder:text-brand-muted/70"
+                  enterkeyhint="go"
+                  aria-label="你的工作職位"
+                  placeholder="輸入你的職位，如：人資主管、社群行銷、業務經理"
+                  class="flex-1 min-w-0 bg-white text-brand-ink px-5 py-3.5 rounded-cis border border-brand-border focus:border-brand-purple focus:outline-none focus:ring-4 focus:ring-brand-purple/15 text-base shadow-xs placeholder:text-brand-muted/70"
                 >
                 <button 
                   @click="generateReport" 
@@ -453,12 +486,12 @@
 
               <!-- Popular Quick Select Pills -->
               <div class="mt-4 flex flex-wrap items-center gap-2">
-                <span class="text-xs text-brand-purple font-bold mr-1">熱門職能快選：</span>
+                <span class="text-xs text-brand-purple font-bold mr-1 w-full sm:w-auto">熱門職能快選：</span>
                 <button 
                   v-for="roleKey in Object.keys(roleProfiles)" 
                   :key="roleKey"
                   @click="selectPredefinedRole(roleKey)"
-                  class="px-3 py-1 rounded-xl text-xs font-semibold bg-white hover:bg-white/80 text-brand-ink border border-brand-border transition-all shadow-2xs"
+                  class="px-3 py-1.5 sm:py-1 rounded-xl text-xs font-semibold bg-white hover:bg-white/80 text-brand-ink border border-brand-border transition-all shadow-2xs"
                 >
                   {{ roleKey }}
                 </button>
@@ -468,19 +501,19 @@
         </div>
 
         <!-- Generated Report Output Card (手冊第 17 頁講義與報告設計) -->
-        <div v-if="currentReport" class="bg-white rounded-cis-lg border border-brand-border shadow-md overflow-hidden print-card">
+        <div v-if="currentReport" class="bg-white rounded-cis-lg border border-brand-border shadow-md overflow-hidden print-card scroll-mt-20 md:scroll-mt-24">
           
           <!-- Report Header -->
-          <div class="p-8 sm:p-10 bg-brand-mist border-b border-brand-border">
+          <div class="p-5 sm:p-10 bg-brand-mist border-b border-brand-border">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div class="flex items-center space-x-2.5">
+                <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span class="px-3 py-0.5 rounded-full bg-brand-purple text-white text-xs font-bold tracking-wide">
                     職能診斷報告
                   </span>
                   <span class="text-xs text-brand-muted font-medium">產出日期：{{ currentDate }}</span>
                 </div>
-                <h2 class="text-2xl sm:text-4xl font-black text-brand-ink mt-3 tracking-tight">
+                <h2 class="text-2xl sm:text-4xl font-black text-brand-ink mt-3 leading-snug tracking-tight">
                   {{ currentReport.title }}
                 </h2>
                 <p class="text-sm sm:text-base text-brand-purple mt-1.5 font-bold">
@@ -489,16 +522,16 @@
               </div>
 
               <!-- Export Buttons -->
-              <div class="flex items-center space-x-2.5 no-print">
+              <div class="grid grid-cols-2 sm:flex items-center gap-2.5 no-print">
                 <button 
                   @click="copyReportMarkdown" 
-                  class="px-4 py-2 bg-white hover:bg-slate-50 text-brand-purple rounded-xl text-xs font-bold border border-brand-border shadow-2xs transition-colors flex items-center space-x-1.5"
+                  class="px-4 py-2.5 sm:py-2 bg-white hover:bg-slate-50 text-brand-purple rounded-xl text-xs font-bold border border-brand-border shadow-2xs transition-colors flex items-center justify-center space-x-1.5 whitespace-nowrap"
                 >
-                  <span>📋 複製完整 Markdown</span>
+                  <span>📋 複製 Markdown</span>
                 </button>
                 <button 
-                  @click="window.print()" 
-                  class="px-4 py-2 bg-brand-purple hover:bg-purple-900 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors flex items-center space-x-1.5"
+                  @click="printReport" 
+                  class="px-4 py-2.5 sm:py-2 bg-brand-purple hover:bg-purple-900 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors flex items-center justify-center space-x-1.5 whitespace-nowrap"
                 >
                   <span>🖨️ 列印 / 存為 PDF</span>
                 </button>
@@ -506,22 +539,22 @@
             </div>
 
             <!-- Core Mission Callout -->
-            <div class="mt-6 p-5 rounded-cis bg-white border border-brand-border text-sm text-brand-ink leading-relaxed shadow-2xs">
+            <div class="mt-5 sm:mt-6 p-4 sm:p-5 rounded-cis bg-white border border-brand-border text-sm text-brand-ink leading-relaxed shadow-2xs">
               <span class="font-extrabold text-brand-purple mr-1.5">🎯 職能轉型核心定位：</span>
               {{ currentReport.core_mission }}
             </div>
           </div>
 
           <!-- Report Content Sections -->
-          <div class="p-8 sm:p-10 space-y-10">
+          <div class="p-5 sm:p-10 space-y-8 sm:space-y-10">
 
             <!-- SECTION 1: Recommended Toolstack -->
             <div>
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
+              <div class="flex items-start space-x-3 mb-4">
+                <div class="flex-shrink-0 mt-0.5 w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
                   1
                 </div>
-                <h3 class="text-xl font-bold text-brand-ink">
+                <h3 class="text-lg sm:text-xl font-bold text-brand-ink leading-snug">
                   推薦必備工具組合 (Recommended Toolstack)
                 </h3>
               </div>
@@ -562,11 +595,11 @@
 
             <!-- SECTION 2: Action List -->
             <div>
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
+              <div class="flex items-start space-x-3 mb-4">
+                <div class="flex-shrink-0 mt-0.5 w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
                   2
                 </div>
-                <h3 class="text-xl font-bold text-brand-ink">
+                <h3 class="text-lg sm:text-xl font-bold text-brand-ink leading-snug">
                   職能任務落地行動清單 (Step-by-Step Action Plan)
                 </h3>
               </div>
@@ -575,15 +608,15 @@
                 <div 
                   v-for="(stage, sidx) in currentReport.action_list" 
                   :key="sidx"
-                  class="bg-brand-mist/40 rounded-cis p-6 border border-brand-border/80"
+                  class="bg-brand-mist/40 rounded-cis p-4 sm:p-6 border border-brand-border/80"
                 >
-                  <h4 class="font-bold text-brand-purple text-base flex items-center space-x-2.5">
-                    <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">
+                  <h4 class="font-bold text-brand-purple text-base flex items-start space-x-2.5">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">
                       {{ sidx + 1 }}
                     </span>
                     <span>{{ stage.stage }}</span>
                   </h4>
-                  <ul class="mt-3.5 space-y-2.5 pl-8 list-disc text-sm text-brand-ink/90 leading-relaxed font-medium">
+                  <ul class="mt-3.5 space-y-2.5 pl-5 sm:pl-8 list-disc text-sm text-brand-ink/90 leading-relaxed font-medium">
                     <li v-for="(step, pidx) in stage.steps" :key="pidx">
                       {{ step }}
                     </li>
@@ -594,11 +627,11 @@
 
             <!-- SECTION 3: Ready-to-use Prompts -->
             <div>
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
+              <div class="flex items-start space-x-3 mb-4">
+                <div class="flex-shrink-0 mt-0.5 w-7 h-7 rounded-lg bg-brand-mist text-brand-purple flex items-center justify-center font-bold text-sm">
                   3
                 </div>
-                <h3 class="text-xl font-bold text-brand-ink">
+                <h3 class="text-lg sm:text-xl font-bold text-brand-ink leading-snug">
                   精選實戰指令範本 (Ready-to-use Prompts)
                 </h3>
               </div>
@@ -610,16 +643,16 @@
                 <div 
                   v-for="(tmpl, tidx) in currentReport.prompt_templates" 
                   :key="tidx"
-                  class="bg-white rounded-cis p-6 border border-brand-border shadow-xs relative"
+                  class="bg-white rounded-cis p-4 sm:p-6 border border-brand-border shadow-xs relative"
                 >
-                  <div class="flex items-center justify-between pb-3 border-b border-brand-border/60">
-                    <div>
+                  <div class="flex items-center justify-between gap-3 pb-3 border-b border-brand-border/60">
+                    <div class="min-w-0">
                       <span class="font-bold text-brand-ink text-base">{{ tmpl.title }}</span>
                       <span class="text-xs text-brand-muted ml-2.5 hidden sm:inline font-medium">{{ tmpl.desc }}</span>
                     </div>
                     <button 
                       @click="copyText(tmpl.prompt, '已複製實戰指令！')"
-                      class="px-3.5 py-1.5 bg-brand-yellow hover:bg-amber-300 text-brand-ink rounded-lg text-xs font-bold transition-all shadow-2xs"
+                      class="flex-shrink-0 whitespace-nowrap px-3.5 py-2 sm:py-1.5 bg-brand-yellow hover:bg-amber-300 text-brand-ink rounded-lg text-xs font-bold transition-all shadow-2xs"
                     >
                       複製指令
                     </button>
@@ -633,7 +666,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
               
               <!-- Common Myths -->
-              <div class="bg-amber-50/60 border border-amber-200/80 rounded-cis p-6">
+              <div class="bg-amber-50/60 border border-amber-200/80 rounded-cis p-4 sm:p-6">
                 <div class="flex items-center space-x-2 text-amber-900 font-bold text-base mb-3">
                   <span>⚠️ 常見迷思與誤區 (Common Myths)</span>
                 </div>
@@ -646,7 +679,7 @@
               </div>
 
               <!-- Pitfalls & Watchouts -->
-              <div class="bg-rose-50/60 border border-rose-200/80 rounded-cis p-6">
+              <div class="bg-rose-50/60 border border-rose-200/80 rounded-cis p-4 sm:p-6">
                 <div class="flex items-center space-x-2 text-rose-900 font-bold text-base mb-3">
                   <span>🚨 易錯提醒與防護線 (Pitfalls & Security)</span>
                 </div>
@@ -664,7 +697,7 @@
         </div>
 
         <!-- Initial Placeholder State -->
-        <div v-else class="text-center py-20 bg-white rounded-cis-lg border border-brand-border p-8 shadow-xs">
+        <div v-else class="text-center py-14 sm:py-20 bg-white rounded-cis-lg border border-brand-border p-6 sm:p-8 shadow-xs">
           <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-brand-mist text-brand-purple flex items-center justify-center text-3xl">
             🎯
           </div>
@@ -681,12 +714,12 @@
       <!-- ========================================== -->
       <section v-if="activeTab === 'workflows'" class="space-y-8">
         
-        <div class="bg-brand-mist rounded-cis-lg p-8 sm:p-11 border border-brand-border shadow-xs">
+        <div class="bg-brand-mist rounded-cis-lg p-5 sm:p-11 border border-brand-border shadow-xs">
           <div class="max-w-2xl space-y-3">
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white text-brand-purple border border-brand-border">
               ⚡ 組合拳人機協作
             </span>
-            <h1 class="text-3xl sm:text-4xl font-black text-brand-ink tracking-tight">
+            <h1 class="text-2xl sm:text-4xl font-black text-brand-ink leading-snug tracking-tight">
               簡報精選：四大高頻實戰 AI 工作流
             </h1>
             <p class="text-base text-brand-ink/80 leading-relaxed font-medium">
@@ -695,10 +728,10 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           
           <!-- Workflow 1 -->
-          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+          <div class="bg-white rounded-cis-lg border border-brand-border p-5 sm:p-7 shadow-xs">
             <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
               <span>WORKFLOW 01</span>
               <span>·</span>
@@ -711,54 +744,54 @@
 
             <div class="mt-6 space-y-3">
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">ChatGPT / Claude</div>
                   <div class="text-[11px] text-brand-muted">輸入「你是-我要-你會」框架，輸出 60 秒短影音分鏡腳本</div>
                 </div>
-                <a href="https://chatgpt.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Recraft.ai / Midjourney</div>
                   <div class="text-[11px] text-brand-muted">生成分鏡所需之品牌風格插圖或商品情境背景</div>
                 </div>
-                <a href="https://recraft.ai" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://recraft.ai" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Runway / 可靈 Kling / Luma</div>
                   <div class="text-[11px] text-brand-muted">運用運動筆刷或相機推鏡，讓靜態圖片產生流暢電影級動態</div>
                 </div>
-                <a href="https://runwayml.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://runwayml.com" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">4</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">4</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Suno AI</div>
                   <div class="text-[11px] text-brand-muted">自訂曲風與歌詞，生成 100% 免版權原創背景配樂 Jingle</div>
                 </div>
-                <a href="https://suno.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://suno.com" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">5</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">5</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">CapCut / 剪映</div>
                   <div class="text-[11px] text-brand-muted">文字一鍵成片、自動卡點字幕、合成所有素材一鍵導出</div>
                 </div>
-                <a href="https://www.capcut.cn" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://www.capcut.cn" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
             </div>
           </div>
 
           <!-- Workflow 2 -->
-          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+          <div class="bg-white rounded-cis-lg border border-brand-border p-5 sm:p-7 shadow-xs">
             <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
               <span>WORKFLOW 02</span>
               <span>·</span>
@@ -771,45 +804,45 @@
 
             <div class="mt-6 space-y-3">
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Whisper / 語音轉錄</div>
                   <div class="text-[11px] text-brand-muted">課堂或演講錄音檔一秒轉為純文字逐字稿</div>
                 </div>
-                <a href="https://openai.com/research/whisper" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">查看 ↗</a>
+                <a href="https://openai.com/research/whisper" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">查看 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Google NotebookLM</div>
                   <div class="text-[11px] text-brand-muted">上傳學期教材，一鍵生成核心 FAQ、大綱與雙人對談播客</div>
                 </div>
-                <a href="https://notebooklm.google.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Gamma App</div>
                   <div class="text-[11px] text-brand-muted">貼入提煉大綱，30 秒自動排版生成精美卡片式投影片</div>
                 </div>
-                <a href="https://gamma.app" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://gamma.app" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">4</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">4</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Napkin AI</div>
                   <div class="text-[11px] text-brand-muted">針對複雜因果理論，貼入文字一秒轉為清晰資訊圖解並貼回簡報</div>
                 </div>
-                <a href="https://napkin.ai" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://napkin.ai" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
             </div>
           </div>
 
           <!-- Workflow 3 -->
-          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+          <div class="bg-white rounded-cis-lg border border-brand-border p-5 sm:p-7 shadow-xs">
             <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
               <span>WORKFLOW 03</span>
               <span>·</span>
@@ -822,36 +855,36 @@
 
             <div class="mt-6 space-y-3">
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Claude / ChatGPT</div>
                   <div class="text-[11px] text-brand-muted">撰寫打中海外客戶痛點的 B2B 產品推介腳本</div>
                 </div>
-                <a href="https://claude.ai" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">MyEdit / PhotoRoom</div>
                   <div class="text-[11px] text-brand-muted">打造專業商務形象照或擬真 3D 分身頭像</div>
                 </div>
-                <a href="https://myedit.online" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://myedit.online" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">HeyGen 數字人分身</div>
                   <div class="text-[11px] text-brand-muted">輸入腳本，生成英語、日語、西班牙語唇形完美同步的解說影音</div>
                 </div>
-                <a href="https://heygen.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://heygen.com" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
             </div>
           </div>
 
           <!-- Workflow 4 -->
-          <div class="bg-white rounded-cis-lg border border-brand-border p-7 shadow-xs">
+          <div class="bg-white rounded-cis-lg border border-brand-border p-5 sm:p-7 shadow-xs">
             <div class="flex items-center space-x-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
               <span>WORKFLOW 04</span>
               <span>·</span>
@@ -864,25 +897,25 @@
 
             <div class="mt-6 space-y-3">
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Google 表單 / Typeform</div>
                   <div class="text-[11px] text-brand-muted">收集潛在受眾的痛點提問與 Email</div>
                 </div>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Make.com 自動化中樞</div>
                   <div class="text-[11px] text-brand-muted">監聽新回覆，自動觸發 OpenAI API 進行個人化深度分析</div>
                 </div>
-                <a href="https://make.com" target="_blank" class="text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
+                <a href="https://make.com" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 whitespace-nowrap py-2 pl-1 text-xs text-brand-purple font-bold hover:underline">開啟 ↗</a>
               </div>
 
               <div class="flex items-center space-x-3 p-3.5 rounded-xl bg-brand-mist/50 border border-brand-border">
-                <span class="w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
-                <div class="flex-1">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-purple text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-brand-ink">Gmail / LINE Notify</div>
                   <div class="text-[11px] text-brand-muted">3 秒內自動將量身打造之建議書與課程連結送達學員手中</div>
                 </div>
@@ -897,14 +930,14 @@
     </main>
 
     <!-- Representative Decks Modal -->
-    <div v-if="activeModalTool" class="fixed inset-0 z-50 bg-brand-ink/50 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-cis-lg max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4 max-h-[85vh] flex flex-col border border-brand-border">
+    <div v-if="activeModalTool" @click.self="activeModalTool = null" class="fixed inset-0 z-50 bg-brand-ink/50 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-4">
+      <div role="dialog" aria-modal="true" class="bg-white rounded-t-cis-lg sm:rounded-cis-lg max-w-lg w-full p-5 sm:p-7 shadow-2xl space-y-4 max-h-[85vh] flex flex-col border border-brand-border safe-bottom">
         <div class="flex items-center justify-between pb-3 border-b border-brand-border">
           <div>
             <h3 class="text-lg font-bold text-brand-ink">{{ activeModalTool.name }}</h3>
             <p class="text-xs text-brand-muted font-medium">簡報教學出處清單</p>
           </div>
-          <button @click="activeModalTool = null" class="w-8 h-8 rounded-full bg-brand-mist hover:bg-brand-border flex items-center justify-center text-brand-ink font-bold text-sm">
+          <button @click="activeModalTool = null" aria-label="關閉" class="flex-shrink-0 w-9 h-9 rounded-full bg-brand-mist hover:bg-brand-border flex items-center justify-center text-brand-ink font-bold text-sm">
             ✕
           </button>
         </div>
@@ -922,7 +955,7 @@
         <div class="pt-2 flex justify-end">
           <button 
             @click="activeModalTool = null" 
-            class="px-5 py-2 bg-brand-purple hover:bg-purple-900 text-white rounded-xl text-xs font-bold"
+            class="w-full sm:w-auto px-5 py-2.5 sm:py-2 bg-brand-purple hover:bg-purple-900 text-white rounded-xl text-sm sm:text-xs font-bold"
           >
             關閉
           </button>
@@ -931,15 +964,15 @@
     </div>
 
     <!-- Footer: 嚴格依據手冊標註 -->
-    <footer class="bg-white border-t border-brand-border py-8 text-center text-xs text-brand-muted no-print space-y-2">
-      <div class="flex items-center justify-center space-x-2">
+    <footer class="bg-white border-t border-brand-border pt-8 pb-28 md:pb-8 px-4 text-center text-xs text-brand-muted no-print space-y-2">
+      <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
         <span class="font-bold text-brand-purple">AI效能實驗室－秉軒老師</span>
-        <span>｜</span>
+        <span class="hidden sm:inline">｜</span>
         <span class="font-semibold text-brand-ink">是你，讓 AI 更強大</span>
-        <span>｜</span>
-        <span>You Make AI Stronger.</span>
+        <span class="hidden sm:inline">｜</span>
+        <span class="w-full sm:w-auto">You Make AI Stronger.</span>
       </div>
-      <p>© 2026 AI 效能實驗室 · 品牌識別系統規範 v1.0 · 專供學員實戰檢索與職能落地使用</p>
+      <p class="leading-relaxed">© 2026 AI 效能實驗室 · 品牌識別系統規範 v1.0 · 專供學員實戰檢索與職能落地使用</p>
     </footer>
 
   </div>
@@ -949,7 +982,7 @@
 
   <!-- App Script -->
   <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed, watch, onMounted, onBeforeUnmount } = Vue;
 
     createApp({
       setup() {
@@ -962,6 +995,17 @@
         const toastMessage = ref('');
         const inputRole = ref('');
         const currentReport = ref(null);
+
+        const tabs = [
+          { id: 'directory', label: '工具庫檢索', short: '工具庫', icon: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>' },
+          { id: 'role-generator', label: '職能行動建議報告', short: '職能報告', icon: '<path d="M9 4h6a2 2 0 012 2v14l-5-3-5 3V6a2 2 0 012-2z"/>' },
+          { id: 'workflows', label: '四大實戰工作流', short: '工作流', icon: '<rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/><path d="M6.5 10v4a2 2 0 002 2H14"/>' }
+        ];
+
+        // 切換分頁時回到頁首，避免停在上一頁的捲動位置
+        watch(activeTab, () => {
+          window.scrollTo({ top: 0 });
+        });
 
         const toolsList = ref(AI_TOOLS_DATA || []);
         const categories = ref(CATEGORIES || []);
@@ -1012,6 +1056,14 @@
 
         const openDeckModal = (tool) => {
           activeModalTool.value = tool;
+        };
+
+        const printReport = () => {
+          window.print();
+        };
+
+        const onKeydown = (e) => {
+          if (e.key === 'Escape') activeModalTool.value = null;
         };
 
         const showToast = (msg) => {
@@ -1177,12 +1229,18 @@
         };
 
         onMounted(() => {
+          document.addEventListener('keydown', onKeydown);
           // 預設載入人資專員作為展示範例
           inputRole.value = "人資專員 / 招募主管";
           currentReport.value = roleProfiles.value["人資專員 / 招募主管"];
         });
 
+        onBeforeUnmount(() => {
+          document.removeEventListener('keydown', onKeydown);
+        });
+
         return {
+          tabs,
           activeTab,
           searchQuery,
           selectedCategory,
@@ -1204,7 +1262,8 @@
           copyText,
           selectPredefinedRole,
           generateReport,
-          copyReportMarkdown
+          copyReportMarkdown,
+          printReport
         };
       }
     }).mount('#app');
